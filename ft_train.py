@@ -25,5 +25,5 @@ data = gensim.models.word2vec.LineSentence(corpus)
 filename = corpus.replace('.txt.gz', '_ft') + '_' + str(skipgram) + '_' + str(window) + '.model'
 
 model = FastText(data, size=100, sg=skipgram, min_count=mincount, window=window, min_n=2, max_n=5,
-                 hs=0, negative=3, workers=cores, iter=iterations, seed=42, bucket=2000000)
+                 hs=0, negative=3, workers=cores, iter=iterations, seed=42, bucket=4000000)
 model.save(filename)
