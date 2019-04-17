@@ -41,11 +41,11 @@ def save_word2vec(fname, vocab, vectors, binary=False):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-    modelfile = sys.argv[1]
-    freq_threshold = int(sys.argv[2])
-    filename = sys.argv[3]
+    modelfile = sys.argv[1]  # Original fastText model
+    freq_threshold = int(sys.argv[2])  # How frequent should the ngrams be? (e.g., 1000)
+    filename = sys.argv[3]  # File to save ngram vectors
 
-    model = gensim.models.FastText.load(modelfile)
+    model = gensim.models.KeyedVectors.load(modelfile)
     model.init_sims(replace=True)
 
     print(model)
@@ -53,30 +53,30 @@ if __name__ == '__main__':
     ngram_identifiers = {}
     hashes = set()
 
-    for word in model.wv.vocab:
+    for word in model.vocab:
         human_ngrams = compute_ngrams(word, model.min_n, model.max_n)
         hash_ngrams = ft_ngram_hashes(word, model.min_n, model.max_n, model.bucket)
         for hum, hsh in zip(human_ngrams, hash_ngrams):
             if hum not in ngram_identifiers:
                 ngram_identifiers[hum] = {}
                 ngram_identifiers[hum]['hash'] = hsh
-                ngram_identifiers[hum]['freq'] = 1
-            ngram_identifiers[hum]['freq'] += 1
+                ngram_identifiers[hum]['freq'] = 0
+            ngram_identifiers[hum]['freq'] += model.vocab[word].count
             hashes.add(hsh)
 
-    print('Unique ngram hashes:', len(hashes))
     print('Unique ngrams:', len(ngram_identifiers))
+    print('Unique ngram hashes:', len(hashes))
 
     fin_ngram_identifiers = {n: ngram_identifiers[n]['hash']
                              for n in ngram_identifiers
                              if ngram_identifiers[n]['freq'] > freq_threshold}
 
     hashes = [fin_ngram_identifiers[i] for i in fin_ngram_identifiers]
-    print('Number of ngrams:', len(hashes))
-    print('Number of unique hashes:', len(set(hashes)))
+    print('Unique ngrams after filtering:', len(hashes))
+    print('Unique hashes after filtering:', len(set(hashes)))
 
     # hashes = sorted(list(hashes))
     # ngram_arr = model.wv.vectors_ngrams[hashes, :]
     # print(ngram_arr.shape)
 
-    save_word2vec(filename, fin_ngram_identifiers, model.wv.vectors_ngrams)
+    save_word2vec(filename, fin_ngram_identifiers, model.vectors_ngrams)
